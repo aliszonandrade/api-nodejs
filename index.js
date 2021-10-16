@@ -10,6 +10,30 @@ app.use(cors());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
+function auth(req, res, next){//middleware
+    const authToken = req.headers['authorization'];
+    
+    if(authToken != undefined){
+        const bearer = authToken.split(' ');
+        var token = bearer[1];
+
+        jwt.verify(token,JWTsecret,(err, data) => {
+            if(err){
+                res.status(401);
+                res.json({err: "Token inválido!"});
+            }else{
+                req.token = token;
+                req.loggedUser = { id: data.id, email: data.email};                
+                next();
+            }
+        })
+    }else{
+        res.status(401);
+        res.json({err: "Token inválido!"});
+    }
+
+}
+
 var DB = {
     games: [
         {
@@ -47,9 +71,9 @@ var DB = {
     ]
 }
 
-app.get("/games", (req,res) => {
+app.get("/games", auth, (req,res) => {
     res.statusCode = 200;
-    res.json(DB.games);
+    res.json({user: req.loggedUser, games: DB.games});
 });
 
 app.get("/game/:id", (req,res) => {
