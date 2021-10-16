@@ -7,6 +7,11 @@
     <title>Loja de games</title>
 </head>
 <body>
+    <h4>Login</h4>
+    <input type="text" nome="email" id="email" placeholder="eita@email.com"><br>
+    <input type="text" nome="password" id="password" placeholder="*****">
+    <button onclick="login()">Entrar</button>
+
     <hr>
     <h4>Lista de games</h4>
     <ul id="games">
@@ -28,6 +33,31 @@
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
+    var axiosConfig = {
+        headers: {
+            Authorization: "Bearer " + localStorage.getItem("token")
+        }
+    }
+
+    function login(){
+        var emailField = document.getElementById("email");
+        var passwordField = document.getElementById("password");
+
+        var email = emailField.value;
+        var password = passwordField.value;
+
+        axios.post("http://localhost:8080/auth",{
+            email,
+            password
+        }).then(res => {
+            var token = res.data.token;
+            localStorage.setItem("token",token);
+            axiosConfig.headers.Authorization = "Bearer " + localStorage.getItem("token");
+        }).catch(err => {
+            alert('Login inválido');
+        })
+    }
+
     function deleteGame(listItem){
         var id = listItem.getAttribute("data-id");
         axios.delete("http://localhost:8080/game/"+id).then(response => {
@@ -92,8 +122,9 @@
     }
 
 
-    axios.get("http://localhost:8080/games").then(response => {
-        var games = response.data;
+    axios.get("http://localhost:8080/games",axiosConfig).then(response => {
+        
+        var games = response.data.games;
         var list = document.getElementById("games");
 
         games.forEach(game => {
